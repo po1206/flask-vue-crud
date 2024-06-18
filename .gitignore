@@ -1,0 +1,4 @@
+env
+server/__pycache__
+client/.vscode
+client/node_modules
