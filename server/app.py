@@ -1,9 +1,20 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
 import uuid
+import stripe
+import os
+from flask import Flask, jsonify, request, json
+from flask_cors import CORS
+
+
+DEBUG = True
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+
+stripe_keys = {
+    'secrete_key': os.environ['STRIPE_SECRETE_KEY'],
+    'publishable_key': os.environ['STRIPE_PUBLISHABLE_KEY'],
+}
+stripe.api_key = stripe_keys['secrete_key'];
 
 CORS(app, resources={r'/*/': {'origins' : '*'}})
 
@@ -76,6 +87,49 @@ def remove_book(book_id):
 @app.route('/ping', methods=['GET'])
 def ping_pong():
     return jsonify('pong!')
+
+@app.route('/config')
+def get_publishable_key():
+    stripe_config = {
+        'publicKey': stripe_keys['publishable_key']
+    }
+    return jsonify(stripe_config)
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    domain_url = 'http://localhost:5173'
+
+    try:
+        data = json.loads(request.data)
+        # get book
+        book_to_purchase = ''
+        for book in BOOKS:
+            if book['id'] == data['book_id']:
+                book_to_purchase = book
+        
+        # create new checkout session
+        checkout_session = stripe.checkout.Session.create(
+            success_url=domain_url + '/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=domain_url +'/canceled',
+            payment_method_types=['card'],
+            mode='payment',
+            line_items=[
+                {
+                    'quantity': 1,
+                    'price_data': {
+                        'unit_amount': round(float(book_to_purchase['price']) * 100),
+                        'product_data': {
+                            'name': book_to_purchase['title']
+                        },
+                        'currency': 'usd'
+                    },
+                }
+            ]
+        )
+
+        return jsonify({'sessionId' : checkout_session['id']})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
 
 if __name__ == '__main__':
     app.run()

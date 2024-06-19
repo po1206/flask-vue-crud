@@ -32,6 +32,7 @@
                 <div class="btn-group" role="group">
                   <button type="button" class="btn btn-warning btn-sm" @click="toggleEditBookModal(book)">Update</button>
                   <button type="button" class="btn btn-danger btn-sm" @click="handleDeleteBook(book)">Delete</button>
+                  <button type="button" class="btn btn-primary btn-sm" @click="handlePurchaseBook(book)">Purchase</button>
                 </div>
               </td>
             </tr>
@@ -218,7 +219,8 @@ export default {
       },
       message: '',
       showMessage: false,
-    }
+      stripe: null,
+    };
   },
   components: {
     alert: Alert
@@ -260,20 +262,26 @@ export default {
           this.getBooks();
         })
     },
-    handleAddReset() {
-      this.initForm();
+    removeBook(bookID) {
+      const path = `http://localhost:5001/books/${bookID}`;
+      axios.delete(path)
+        .then( () => {
+          this.getBooks();
+          this.message = 'Book removed!';
+          this.showMessage = true;
+        })
+        .catch((error) => {
+          console.error(error);
+          this.getBooks();
+        });
     },
-    handleAddSubmit() {
-      this.toggleAddBookModal();
-      const payload = {
-        title: this.addBookForm.title,
-        author: this.addBookForm.author,
-        read: this.addBookForm.read,
-        price: this.addBookForm.price,
-      };
-      this.addBook(payload);
-      this.initForm();
-    },
+    getStripePublishableKey() {
+      fetch('http://localhost:5001/config')
+        .then((result) => result.json())
+        .then((data) => {
+            this.stripe = Stripe(data.publicKey);
+        });
+    }, 
     initForm() {
       this.addBookForm.title = '';
       this.addBookForm.author = '';
@@ -308,6 +316,20 @@ export default {
         body.classList.remove('modal-open');
       }
     },
+    handleAddReset() {
+      this.initForm();
+    },
+    handleAddSubmit() {
+      this.toggleAddBookModal();
+      const payload = {
+        title: this.addBookForm.title,
+        author: this.addBookForm.author,
+        read: this.addBookForm.read,
+        price: this.addBookForm.price,
+      };
+      this.addBook(payload);
+      this.initForm();
+    },
     handleEditSubmit() {
       this.toggleEditBookModal(null);
       const payload = {
@@ -318,29 +340,35 @@ export default {
       };
       this.updateBook(payload, this.editBookForm.id);
     },
-    handleDeleteBook(book) {
-      this.removeBook(book.id);
-    },
-    removeBook(bookID) {
-      const path = `http://localhost:5001/books/${bookID}`;
-      axios.delete(path)
-        .then( () => {
-          this.getBooks();
-          this.message = 'Book removed!';
-          this.showMessage = true;
-        })
-        .catch((error) => {
-          console.error(error);
-          this.getBooks();
-        });
-    },
     handleEditCancel() {
       this.toggleEditBookModal(null);
       this.initForm();
+    },
+    handleDeleteBook(book) {
+      this.removeBook(book.id);
+    },
+    handlePurchaseBook(book) {
+      // Get Checkout Session ID
+      fetch('http://localhost:5001/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({book_id : book.id})
+      })
+      .then((result) => result.json())
+      .then((data) => {
+        console.log(data);
+        return this.stripe.redirectToCheckout({sessionId: data.sessionId});
+      })
+      .then((res) => {
+        console.log(res);
+      })
     }
   },
   created() {
     this.getBooks();
+    this.getStripePublishableKey();
   },
 };
 </script>
