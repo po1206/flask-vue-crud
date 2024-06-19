@@ -13,6 +13,7 @@
               <th scope="col">Title</th>
               <th scope="col">Author</th>
               <th scope="col">Read?</th>
+              <th scope="col">Purchase Price</th>
               <th></th>
             </tr>
           </thead>
@@ -22,6 +23,10 @@
               <td>{{ book.author }}</td>
               <td>
                 <span v-if="book.read">Yes</span>
+                <span v-else>No</span>
+              </td>
+              <td>
+                ${{ book.price }}
               </td>
               <td>
                 <div class="btn-group" role="group">
@@ -35,6 +40,7 @@
       </div>
     </div>
   </div>
+  <!-- add book modal -->
   <div
     ref="addBookModal"
     class="modal fade"
@@ -76,6 +82,16 @@
                 id="addBookAuthor"
                 v-model="addBookForm.author"
                 placeholder="Enter author"
+              >
+            </div>
+            <div class="mb-3">
+              <label for="addBookPrice" class="form-label">Purchase Price:</label>
+              <input
+                type="text"
+                class="form-control"
+                id="addBookPrice"
+                v-model="addBookForm.price"
+                placeholder="Enter price"
               >
             </div>
             <div class="mb-3 form-check">
@@ -138,6 +154,15 @@
                 v-model="editBookForm.author"
                 placeholder="Enter author">
             </div>
+            <div class="mb-3">
+              <label for="editBookPrice" class="form-label">Purchase Price:</label>
+              <input
+                type="text"
+                class="form-control"
+                id="editBookPrice"
+                v-model="editBookForm.price"
+                placeholder="Enter price">
+            </div>            
             <div class="mb-3 form-check">
               <input
                 type="checkbox"
@@ -181,6 +206,7 @@ export default {
         title: '',
         author: '',
         read: false,
+        price: '',
       },
       activeEditBookModal: false,
       editBookForm: {
@@ -188,6 +214,7 @@ export default {
         title: '',
         author: '',
         read: false,
+        price: '',
       },
       message: '',
       showMessage: false,
@@ -242,6 +269,7 @@ export default {
         title: this.addBookForm.title,
         author: this.addBookForm.author,
         read: this.addBookForm.read,
+        price: this.addBookForm.price,
       };
       this.addBook(payload);
       this.initForm();
@@ -250,10 +278,12 @@ export default {
       this.addBookForm.title = '';
       this.addBookForm.author = '';
       this.addBookForm.read = false;
+      this.addBookForm.price = '';
       this.editBookForm.id = '';
       this.editBookForm.title = '';
       this.editBookForm.author = '';
       this.editBookForm.read = false;
+      this.editBookForm.price = '';
     },
     toggleAddBookModal() {
       const body = document.querySelector('body');
@@ -283,7 +313,8 @@ export default {
       const payload = {
         title: this.editBookForm.title,
         author: this.editBookForm.author,
-        read: this.editBookForm.read
+        read: this.editBookForm.read,
+        price: this.editBookForm.price,
       };
       this.updateBook(payload, this.editBookForm.id);
     },

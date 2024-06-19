@@ -12,19 +12,22 @@ BOOKS = [
         'id': uuid.uuid4().hex,
         'title' : 'On the Road',
         'author' : 'Jack Kerouac',
-        'read' : True
+        'read' : True,
+        'price': '19.99'
     },
     {
         'id': uuid.uuid4().hex,
         'title' : 'Harry Potter and the Philosopher\'s Stone',
         'author' : 'J.K. Rowling',
-        'read' : False
+        'read' : False,
+        'price': '9.99'
     },
     {
         'id': uuid.uuid4().hex,
         'title' : 'Green Eggs and Ham',
         'author' : 'Dr. Seuss',
-        'read' : True
+        'read' : True,
+        'price': '3.99'
     }
 ]
 @app.route('/books', methods=['GET', 'POST']) 
@@ -36,7 +39,8 @@ def all_books():
             'id': uuid.uuid4().hex,
             'title': post_data.get('title'),
             'author': post_data.get('author'),
-            'read': post_data.get('read')
+            'read': post_data.get('read'),
+            'price': post_data.get('price')
         })
         response_object['message'] = 'Book added!'
     else:
@@ -53,7 +57,8 @@ def single_book(book_id):
             'id': uuid.uuid4().hex,
             'title': post_data.get('title'),
             'author': post_data.get('author'),
-            'read': post_data.get('read')
+            'read': post_data.get('read'),
+            'price': post_data.get('price')
         })
         response_object['message'] = 'Book updated!'
     if request.method == 'DELETE':
